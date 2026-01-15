@@ -9,8 +9,6 @@ import os
 from pathlib import Path
 
 
-
-
 class Handler(FileSystemEventHandler):
     def __init__(self, root_dir):
         self.root_dir = root_dir
@@ -36,7 +34,7 @@ def main():
     observer = Observer()
     observer.schedule(
         Handler(root_dir),
-        os.path.join(root_dir, "jobs/"), 
+        str(root_dir / "jobs/"), 
         recursive=True
     )
 

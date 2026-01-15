@@ -30,9 +30,8 @@ class JobError():
         self.file.close()
 
         if final_size > self.initial_size:
-            new_path = os.path.join(self.job_config.root_dir, "errors/")
-            new_path = os.path.join(new_path, f"{self.job_submission.name}.err")
-            shutil.move(self.path, new_path)
+            new_path = self.job_config.root_dir / f"errors/{self.job_submission.name}.err"
+            shutil.move(self.path, str(new_path))
 
             print(f"Process failure! See log: {new_path}.")
         else:
@@ -49,8 +48,8 @@ class JobOutput():
             self.out_path = None
 
     def make_file(self):
-        out_dir = os.path.join(self.job_config.root_dir, "output/")
-        self.out_path = os.path.join(out_dir, f"{self.job_submission.name}.out")
+        self.out_path = self.job_config.root_dir / f"output/{self.job_submission.name}.out"
+        self.out_path = str(self.out_path)
         self.file = open(self.out_path, "w")
 
     def clean(self):
