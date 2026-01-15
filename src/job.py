@@ -16,19 +16,18 @@ class JobConfig():
 
 
 class JobError():
-    def __init__(self, file_path=None, submission_name=None):
-        self.submission_name = submission_name
-        self.file_path = file_path
+    def __init__(self, job_config=None):
+        self.job_config = job_config
 
         self.path = None
         self.file = None
         self.initial_size = None
 
     def make_file(self):
-        self.path = os.path.join(tempfile.gettempdir(), f"{self.submission_name}.err")
+        self.path = os.path.join(tempfile.gettempdir(), f"{self.job_config.submission_name}.err")
 
         self.file = open(self.path, "w")
-        self.file.write(f"\n[{time.strftime('%H:%M:%S')}] Launching: {self.file_path}\n")
+        self.file.write(f"\n[{time.strftime('%H:%M:%S')}] Launching: {self.job_config.file_path}\n")
         self.file.flush()
 
         self.initial_size = os.stat(self.file.fileno()).st_size
@@ -44,7 +43,7 @@ class JobError():
             has_error = False
 
         if has_error == True:
-            new_path = os.path.expanduser(f"~/cluster/parallel/errors/{self.submission_name}.err")
+            new_path = os.path.expanduser(f"~/cluster/parallel/errors/{self.job_config.submission_name}.err")
             shutil.move(self.path, new_path)
 
             print(f"Process failure! See log: {new_path}.")
@@ -63,8 +62,7 @@ class Job():
         )
 
         self.job_error = JobError(
-            file_path=self.job_config.file_path,
-            submission_name=self.job_config.submission_name
+            job_config = self.job_config
         )
         self.job_error.make_file()
 
