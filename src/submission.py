@@ -14,7 +14,7 @@ class JobConfig():
 class JobSubmission():
     def __init__(self, job_submission_path = None):
         self.path = job_submission_path
-        self.name = os.path.basename(job_submission_path)
+        self.name = os.path.basename(self.path)
 
     def configure_job(self):
         with open(self.path, "r") as f:
