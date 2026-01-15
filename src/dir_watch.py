@@ -18,11 +18,11 @@ class Handler(FileSystemEventHandler):
     def on_created(self, event):
         time.sleep(1)
         job_submission = JobSubmission(event.src_path)
-        job_submission.configure_job()
+        job_config = job_submission.configure_job()
 
         job = Job(
             job_submission = job_submission,
-            job_config = job_submission.job_config
+            job_config = job_config
         )
         job.start()
 

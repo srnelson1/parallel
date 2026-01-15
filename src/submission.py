@@ -21,7 +21,7 @@ class JobSubmission():
             lines = [next(f) for line in range(0, 3)]
             script = f.read()
 
-        self.job_config = JobConfig(
+        return JobConfig(
             file_path = self._build_file_script(script),
             lang = lines[0].replace("#", "").strip(),
             walltime = self._compute_walltime(lines[1]),
