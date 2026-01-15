@@ -43,7 +43,6 @@ class JobOutput():
         self.job_submission = job_submission
         self.job_config = job_config
 
-
     def make_file(self):
         if self.job_config.has_output:
             self.out_path = self.job_config.root_dir / f"output/{self.job_submission.name}.out"
