@@ -8,16 +8,19 @@ import time
 import os
 
 
-WATCH_DIR = os.path.expanduser("~/cluster/parallel/jobs")
+ROOT_DIR = os.path.expanduser("~/cluster/parallel")
 
 
 class Handler(FileSystemEventHandler):
-    def __init__(self):
-        pass
+    def __init__(self, root_dir):
+        self.root_dir = root_dir
 
     def on_created(self, event):
         time.sleep(1)
-        job_submission = JobSubmission(event.src_path)
+        job_submission = JobSubmission(
+            event.src_path,
+            self.root_dir
+        )
         job_config = job_submission.configure_job()
 
         job = Job(
@@ -30,8 +33,8 @@ class Handler(FileSystemEventHandler):
 def main():
     observer = Observer()
     observer.schedule(
-        Handler(),
-        WATCH_DIR, 
+        Handler(ROOT_DIR),
+        os.path.join(ROOT_DIR, "jobs/"), 
         recursive=True
     )
 

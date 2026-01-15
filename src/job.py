@@ -30,7 +30,8 @@ class JobError():
         self.file.close()
 
         if final_size > self.initial_size:
-            new_path = os.path.expanduser(f"~/cluster/parallel/errors/{self.job_submission.name}.err")
+            new_path = os.path.join(self.job_config.root_dir, "errors/")
+            new_path = os.path.join(new_path, f"{self.job_submission.name}.err")
             shutil.move(self.path, new_path)
 
             print(f"Process failure! See log: {new_path}.")
@@ -48,7 +49,7 @@ class JobOutput():
             self.out_path = None
 
     def make_file(self):
-        out_dir = os.path.expanduser("~/cluster/parallel/output")
+        out_dir = os.path.join(self.job_config.root_dir, "output/")
         self.out_path = os.path.join(out_dir, f"{self.job_submission.name}.out")
         self.file = open(self.out_path, "w")
 
