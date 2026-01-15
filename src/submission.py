@@ -3,22 +3,30 @@ import tempfile
 
 CLOCK = [3600, 60, 1]
 
+class JobConfig():
+    def __init__(self, submission_path=None, submission_name=None, file_path=None, lang=None, walltime=None, has_output=None):
+        self.file_path = file_path
+        self.lang = lang
+        self.walltime = walltime
+        self.has_output = has_output
+
+
 class Submission():
     def __init__(self, submission_path = None):
         self.path = submission_path
-        self.file_path = None
-        self.lang = None
-        self.walltime = None
+        self.name = os.path.basename(submission_path)
 
-    def build_job(self):
+    def configure_job(self):
         with open(self.path, "r") as f:
             lines = [next(f) for line in range(0, 3)]
             script = f.read()
 
-        self.file_path = self._build_file_script(script)
-        self.lang = lines[0].replace("#", "").strip()
-        self.walltime = self._compute_walltime(lines[1])
-        self.has_output = self._has_output(lines[2])
+        self.job_config = JobConfig(
+            file_path = self._build_file_script(script),
+            lang = lines[0].replace("#", "").strip(),
+            walltime = self._compute_walltime(lines[1]),
+            has_output = self._has_output(lines[2])
+        )
 
     def _build_file_script(self, script):
         with tempfile.NamedTemporaryFile(mode="w", delete=False) as tmp:

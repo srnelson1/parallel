@@ -17,16 +17,12 @@ class Handler(FileSystemEventHandler):
 
     def on_created(self, event):
         time.sleep(1)
-        
         submission = Submission(event.src_path)
-        submission.build_job()
+        submission.configure_job()
 
         job = Job(
-            submission_path = submission.path,
-            file_path = submission.file_path, 
-            lang = submission.lang,
-            walltime = submission.walltime,
-            has_output = submission.has_output
+            submission = submission,
+            job_config = submission.job_config
         )
         job.start()
 

@@ -5,18 +5,10 @@ import shutil
 import os
 import time
 
-class JobConfig():
-    def __init__(self, submission_path=None, submission_name=None, file_path=None, lang=None, walltime=None, has_output=None):
-        self.submission_path = submission_path
-        self.submission_name = os.path.basename(submission_path)
-        self.file_path = file_path
-        self.lang = lang
-        self.walltime = walltime
-        self.has_output = has_output
-
 
 class JobError():
-    def __init__(self, job_config=None):
+    def __init__(self, submission = None, job_config=None):
+        self.submission = submission
         self.job_config = job_config
 
         self.path = None
@@ -24,7 +16,7 @@ class JobError():
         self.initial_size = None
 
     def make_file(self):
-        self.path = os.path.join(tempfile.gettempdir(), f"{self.job_config.submission_name}.err")
+        self.path = os.path.join(tempfile.gettempdir(), f"{self.submission.name}.err")
 
         self.file = open(self.path, "w")
         self.file.write(f"\n[{time.strftime('%H:%M:%S')}] Launching: {self.job_config.file_path}\n")
@@ -43,7 +35,7 @@ class JobError():
             has_error = False
 
         if has_error == True:
-            new_path = os.path.expanduser(f"~/cluster/parallel/errors/{self.job_config.submission_name}.err")
+            new_path = os.path.expanduser(f"~/cluster/parallel/errors/{self.submission.name}.err")
             shutil.move(self.path, new_path)
 
             print(f"Process failure! See log: {new_path}.")
@@ -52,16 +44,12 @@ class JobError():
 
 
 class Job():
-    def __init__(self, submission_path=None, file_path=None, lang=None, walltime=None, has_output=None):
-        self.job_config = JobConfig(
-                submission_path=submission_path,
-                file_path=file_path,
-                lang=lang,
-                walltime=walltime,
-                has_output=has_output
-        )
+    def __init__(self, submission = None, job_config = None):
+        self.submission = submission
+        self.job_config = job_config
 
         self.job_error = JobError(
+            submission = self.submission,
             job_config = self.job_config
         )
         self.job_error.make_file()
@@ -91,7 +79,7 @@ class Job():
         lifecycle = threading.Thread(
             target = self._run_lifecycle,
             daemon = True,
-            name = f"Job-{self.job_config.submission_name}"
+            name = f"Job-{self.submission.name}"
         )
 
         lifecycle.start()
@@ -117,11 +105,11 @@ class Job():
         self.job_error.clean()
 
         os.remove(self.job_config.file_path)
-        os.remove(self.job_config.submission_path)
+        os.remove(self.submission.path)
 
     def _out_file(self):
         out_dir = os.path.expanduser("~/cluster/parallel/output")
-        self.out_path = os.path.join(out_dir, f"{self.job_config.submission_name}.out")
+        self.out_path = os.path.join(out_dir, f"{self.submission.name}.out")
         out_file = open(self.out_path, "w")
 
         return out_file
