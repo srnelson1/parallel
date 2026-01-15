@@ -5,35 +5,86 @@ import shutil
 import os
 import time
 
-class Job():
-    def __init__(self, submission_path=None, file_path=None, lang=None, walltime=None, has_output=None):
+class JobConfig():
+    def __init__(self, submission_path=None, submission_name=None, file_path=None, lang=None, walltime=None, has_output=None):
         self.submission_path = submission_path
+        self.submission_name = os.path.basename(submission_path)
         self.file_path = file_path
         self.lang = lang
         self.walltime = walltime
         self.has_output = has_output
 
+
+class JobError():
+    def __init__(self, file_path=None, submission_name=None):
+        self.submission_name = submission_name
+        self.file_path = file_path
+
+        self.path = None
+        self.file = None
+        self.initial_size = None
+
+    def make_file(self):
+        self.path = os.path.join(tempfile.gettempdir(), f"{self.submission_name}.err")
+
+        self.file = open(self.path, "w")
+        self.file.write(f"\n[{time.strftime('%H:%M:%S')}] Launching: {self.file_path}\n")
+        self.file.flush()
+
+        self.initial_size = os.stat(self.file.fileno()).st_size
+
+    def clean(self):
+        self.file.flush()
+        final_size = os.stat(self.file.fileno()).st_size
+        self.file.close()
+
+        if final_size > self.initial_size:
+            has_error = True
+        else:
+            has_error = False
+
+        if has_error == True:
+            new_path = os.path.expanduser(f"~/cluster/parallel/errors/{self.submission_name}.err")
+            shutil.move(self.path, new_path)
+
+            print(f"Process failure! See log: {new_path}.")
+        else:
+            os.remove(self.path)
+
+
+class Job():
+    def __init__(self, submission_path=None, file_path=None, lang=None, walltime=None, has_output=None):
+        self.job_config = JobConfig(
+                submission_path=submission_path,
+                file_path=file_path,
+                lang=lang,
+                walltime=walltime,
+                has_output=has_output
+        )
+
+        self.job_error = JobError(
+            file_path=self.job_config.file_path,
+            submission_name=self.job_config.submission_name
+        )
+        self.job_error.make_file()
+
         self.proc = None
         self.returncode = None
-        self.err_file = None
-        self.err_path = None
         self.out_file = None
         self.out_path = None
 
-        self.submission_name = os.path.basename(self.submission_path)
 
 
     def start(self):
-        if self.has_output == True:
+        if self.job_config.has_output == True:
             self.out_file = self._out_file()
         else:
             self.out_file = subprocess.DEVNULL
-        self._error_file()
 
         proc = subprocess.Popen(
-                [self.lang, self.file_path],
+                [self.job_config.lang, self.job_config.file_path],
                 stdout = self.out_file,
-                stderr = self.err_file,
+                stderr = self.job_error.file,
                 stdin = subprocess.DEVNULL
         )
 
@@ -42,7 +93,7 @@ class Job():
         lifecycle = threading.Thread(
             target = self._run_lifecycle,
             daemon = True,
-            name = f"Job-{os.path.basename(self.file_path)}"
+            name = f"Job-{self.job_config.submission_name}"
         )
 
         lifecycle.start()
@@ -62,49 +113,26 @@ class Job():
         return self.proc.poll() == None
 
     def clean(self):
-        self.err_file.close()
-
-        if self.has_output == True:
+        if self.job_config.has_output == True:
             self.out_file.close()
+        
+        self.job_error.clean()
 
-        if self._errored() == False:
-            os.remove(self.err_path)
-        else:
-            new_path = os.path.expanduser(f"~/cluster/parallel/errors/{self.submission_name}.err")
-            shutil.move(self.err_path, new_path)
-
-            print(f"Process failure! See log: {new_path}.")
-            
-
-        os.remove(self.file_path)
-        os.remove(self.submission_path)
+        os.remove(self.job_config.file_path)
+        os.remove(self.job_config.submission_path)
 
     def _out_file(self):
         out_dir = os.path.expanduser("~/cluster/parallel/output")
-        self.out_path = os.path.join(out_dir, f"{self.submission_name}.out")
+        self.out_path = os.path.join(out_dir, f"{self.job_config.submission_name}.out")
         out_file = open(self.out_path, "w")
 
         return out_file
 
 
-    def _error_file(self):
-        self.err_path = os.path.join(tempfile.gettempdir(), f"{self.submission_name}.err")
-
-        self.err_file = open(self.err_path, "w")
-        self.err_file.write(f"\n[{time.strftime('%H:%M:%S')}] Launching: {self.file_path}\n")
-        self.err_file.flush()
-
-    def _errored(self):
-        with open(self.err_path, "r") as err_file:
-            text = err_file.read()
-            if "error" in text.lower() or self.returncode != 0: #some languages return 0 even on error
-                return True
-
-        return False
 
     def _run_lifecycle(self):
         try:
-            self.proc.wait(timeout=self.walltime)
+            self.proc.wait(timeout=self.job_config.walltime)
 
         except subprocess.TimeoutExpired:
             self.stop()
