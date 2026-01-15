@@ -43,6 +43,25 @@ class JobError():
             os.remove(self.path)
 
 
+class JobOutput():
+    def __init__(self, job_submission = None, job_config = None):
+        self.job_submission = job_submission
+        self.job_config = job_config
+
+        if not self.job_config.has_output:
+            self.file = subprocess.DEVNULL
+            self.out_path = None
+
+    def make_file(self):
+        out_dir = os.path.expanduser("~/cluster/parallel/output")
+        self.out_path = os.path.join(out_dir, f"{self.job_submission.name}.out")
+        self.file = open(self.out_path, "w")
+
+    def clean(self):
+        if self.job_config.has_output:
+            self.file.close()
+
+
 class Job():
     def __init__(self, job_submission = None, job_config = None):
         self.job_submission = job_submission
@@ -54,22 +73,20 @@ class Job():
         )
         self.job_error.make_file()
 
+        self.job_output = JobOutput(
+                job_submission = job_submission,
+                job_config = job_config
+        )
+        self.job_output.make_file()
+
         self.proc = None
         self.returncode = None
-        self.out_file = None
-        self.out_path = None
-
 
 
     def start(self):
-        if self.job_config.has_output == True:
-            self.out_file = self._out_file()
-        else:
-            self.out_file = subprocess.DEVNULL
-
         proc = subprocess.Popen(
                 [self.job_config.lang, self.job_config.file_path],
-                stdout = self.out_file,
+                stdout = self.job_output.file,
                 stderr = self.job_error.file,
                 stdin = subprocess.DEVNULL
         )
@@ -99,21 +116,11 @@ class Job():
         return self.proc.poll() == None
 
     def clean(self):
-        if self.job_config.has_output == True:
-            self.out_file.close()
-        
         self.job_error.clean()
+        self.job_output.clean()
 
         os.remove(self.job_config.file_path)
         os.remove(self.job_submission.path)
-
-    def _out_file(self):
-        out_dir = os.path.expanduser("~/cluster/parallel/output")
-        self.out_path = os.path.join(out_dir, f"{self.job_submission.name}.out")
-        out_file = open(self.out_path, "w")
-
-        return out_file
-
 
 
     def _run_lifecycle(self):
