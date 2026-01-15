@@ -43,14 +43,15 @@ class JobOutput():
         self.job_submission = job_submission
         self.job_config = job_config
 
-        if not self.job_config.has_output:
-            self.file = subprocess.DEVNULL
-            self.out_path = None
 
     def make_file(self):
-        self.out_path = self.job_config.root_dir / f"output/{self.job_submission.name}.out"
-        self.out_path = str(self.out_path)
-        self.file = open(self.out_path, "w")
+        if self.job_config.has_output:
+            self.out_path = self.job_config.root_dir / f"output/{self.job_submission.name}.out"
+            self.out_path = str(self.out_path)
+            self.file = open(self.out_path, "w")
+        else:
+            self.file = subprocess.DEVNULL
+            self.out_path = None
 
     def clean(self):
         if self.job_config.has_output:
