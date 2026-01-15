@@ -6,6 +6,7 @@ from submission import JobSubmission
 
 import time
 import os
+from pathlib import Path
 
 
 
@@ -30,7 +31,7 @@ class Handler(FileSystemEventHandler):
 
 
 def main():
-    root_dir = os.path.expanduser("~/cluster/parallel")
+    root_dir = Path(__file__).resolve().parent.parent
 
     observer = Observer()
     observer.schedule(
