@@ -2,7 +2,7 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
 from job import Job
-from submission import Submission
+from submission import JobSubmission
 
 import time
 import os
@@ -17,12 +17,12 @@ class Handler(FileSystemEventHandler):
 
     def on_created(self, event):
         time.sleep(1)
-        submission = Submission(event.src_path)
-        submission.configure_job()
+        job_submission = JobSubmission(event.src_path)
+        job_submission.configure_job()
 
         job = Job(
-            submission = submission,
-            job_config = submission.job_config
+            job_submission = job_submission,
+            job_config = job_submission.job_config
         )
         job.start()
 

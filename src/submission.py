@@ -4,17 +4,17 @@ import tempfile
 CLOCK = [3600, 60, 1]
 
 class JobConfig():
-    def __init__(self, submission_path=None, submission_name=None, file_path=None, lang=None, walltime=None, has_output=None):
+    def __init__(self, job_submission_path=None, submission_name=None, file_path=None, lang=None, walltime=None, has_output=None):
         self.file_path = file_path
         self.lang = lang
         self.walltime = walltime
         self.has_output = has_output
 
 
-class Submission():
-    def __init__(self, submission_path = None):
-        self.path = submission_path
-        self.name = os.path.basename(submission_path)
+class JobSubmission():
+    def __init__(self, job_submission_path = None):
+        self.path = job_submission_path
+        self.name = os.path.basename(job_submission_path)
 
     def configure_job(self):
         with open(self.path, "r") as f:
