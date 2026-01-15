@@ -30,11 +30,6 @@ class JobError():
         self.file.close()
 
         if final_size > self.initial_size:
-            has_error = True
-        else:
-            has_error = False
-
-        if has_error == True:
             new_path = os.path.expanduser(f"~/cluster/parallel/errors/{self.job_submission.name}.err")
             shutil.move(self.path, new_path)
 
