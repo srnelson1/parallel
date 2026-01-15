@@ -101,7 +101,6 @@ class Job():
 
         lifecycle.start()
 
-
     def stop(self):
         self.proc.terminate()
 
@@ -111,17 +110,12 @@ class Job():
             self.proc.kill()
             self.proc.wait()
 
-
-    def is_running(self):
-        return self.proc.poll() == None
-
     def clean(self):
         self.job_error.clean()
         self.job_output.clean()
 
         os.remove(self.job_config.file_path)
         os.remove(self.job_submission.path)
-
 
     def _run_lifecycle(self):
         try:
