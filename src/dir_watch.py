@@ -17,8 +17,10 @@ class Handler(FileSystemEventHandler):
         self.active_jobs = 0
         self.job_queue = []
 
+        self._start()
+
     def on_created(self, event):
-        job = self._new_job(event)
+        job = self._new_job(event.src_path)
 
         if self.active_jobs < JOB_COUNT:
             time.sleep(1)
@@ -36,9 +38,9 @@ class Handler(FileSystemEventHandler):
         else:
             self.active_jobs -= 1
 
-    def _new_job(self, event):
+    def _new_job(self, job_path):
         job_submission = JobSubmission(
-            event.src_path,
+            job_path,
             self.root_dir
         )
         job_config = job_submission.configure_job()
@@ -49,6 +51,20 @@ class Handler(FileSystemEventHandler):
         )
 
         return job
+
+    def _start(self):
+        jobs_path = Path(self.root_dir / "jobs")
+        job_paths = [path for path in list(jobs_path.iterdir()) if not path.name.startswith(".")]
+
+        for path in job_paths:
+            job = self._new_job(str(path))
+
+            if self.active_jobs < JOB_COUNT:
+                time.sleep(1)
+                job.start()
+                self.active_jobs += 1
+            else:
+                self.job_queue.append(job)
 
 
 
