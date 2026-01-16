@@ -8,13 +8,35 @@ import time
 import os
 from pathlib import Path
 
+JOB_COUNT = 9
+
 
 class Handler(FileSystemEventHandler):
     def __init__(self, root_dir):
         self.root_dir = root_dir
+        self.active_jobs = 0
+        self.job_queue = []
 
     def on_created(self, event):
-        time.sleep(1)
+        job = self._new_job(event)
+
+        if self.active_jobs < JOB_COUNT:
+            time.sleep(1)
+            job.start()
+
+            self.active_jobs += 1
+        else:
+            self.job_queue.append(job)
+
+    def on_deleted(self, event):
+        if self.job_queue != []:
+            job = self.job_queue.pop()
+            job.start()
+
+        else:
+            self.active_jobs -= 1
+
+    def _new_job(self, event):
         job_submission = JobSubmission(
             event.src_path,
             self.root_dir
@@ -25,7 +47,9 @@ class Handler(FileSystemEventHandler):
             job_submission = job_submission,
             job_config = job_config
         )
-        job.start()
+
+        return job
+
 
 
 def main():
