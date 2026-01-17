@@ -66,19 +66,20 @@ class Job():
             job_submission = self.job_submission,
             job_config = self.job_config
         )
-        self.job_error.make_file()
 
         self.job_output = JobOutput(
                 job_submission = job_submission,
                 job_config = job_config
         )
-        self.job_output.make_file()
 
         self.proc = None
         self.returncode = None
 
 
     def start(self):
+        self.job_error.make_file()
+        self.job_output.make_file()
+
         proc = subprocess.Popen(
                 [self.job_config.lang, self.job_config.file_path],
                 stdout = self.job_output.file,
