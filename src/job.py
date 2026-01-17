@@ -74,6 +74,7 @@ class Job():
 
         self.proc = None
         self.returncode = None
+        self.lifecycle = None
 
 
     def start(self):
@@ -89,13 +90,13 @@ class Job():
 
         self.proc = proc
 
-        lifecycle = threading.Thread(
+        self.lifecycle = threading.Thread(
             target = self._run_lifecycle,
             daemon = True,
             name = f"Job-{self.job_submission.name}"
         )
 
-        lifecycle.start()
+        self.lifecycle.start()
 
     def stop(self):
         self.proc.terminate()

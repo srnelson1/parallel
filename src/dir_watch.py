@@ -4,18 +4,25 @@ from watchdog.events import FileSystemEventHandler
 from job import Job
 from submission import JobSubmission
 
+import signal
 import time
 import os
 from pathlib import Path
 
 JOB_COUNT = 9
 
+class GracefulExit(Exception):
+    pass
+
+def raise_graceful_exit(*args):
+    raise GracefulExit()
 
 class Handler(FileSystemEventHandler):
     def __init__(self, root_dir):
         self.root_dir = root_dir
         self.active_jobs = 0
         self.job_queue = []
+        self.started_jobs = []
 
         self._start()
 
@@ -26,6 +33,8 @@ class Handler(FileSystemEventHandler):
             time.sleep(1)
             job.start()
 
+            self.started_jobs.append(job)
+
             self.active_jobs += 1
         else:
             self.job_queue.append(job)
@@ -34,6 +43,8 @@ class Handler(FileSystemEventHandler):
         if self.job_queue != []:
             job = self.job_queue.pop()
             job.start()
+
+            self.started_jobs.append(job)
 
         else:
             self.active_jobs -= 1
@@ -62,18 +73,29 @@ class Handler(FileSystemEventHandler):
             if self.active_jobs < JOB_COUNT:
                 time.sleep(1)
                 job.start()
+
+                self.started_jobs.append(job)
+
                 self.active_jobs += 1
             else:
                 self.job_queue.append(job)
 
+def clean_jobs(handler):
+    for job in handler.started_jobs:
+        if job.returncode == None:
+            job.stop()
 
+    if job.lifecycle.is_alive():
+        job.lifecycle.join(timeout=1.0)
 
-def main():
+def start_lifecycle():
+    signal.signal(signal.SIGTERM, raise_graceful_exit)
     root_dir = Path(__file__).resolve().parent.parent
 
     observer = Observer()
+    handler = Handler(root_dir)
     observer.schedule(
-        Handler(root_dir),
+        handler,
         str(root_dir / "jobs/"), 
         recursive=True
     )
@@ -83,9 +105,16 @@ def main():
     try:
         while True:
             time.sleep(1)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, GracefulExit):
         observer.stop()
-    observer.join()
+        observer.join()
+        clean_jobs(handler)
+
+
+
+
+def main():
+    start_lifecycle()
 
 
 if __name__ == "__main__":
