@@ -24,7 +24,16 @@ class Handler(FileSystemEventHandler):
         self.job_queue = []
         self.started_jobs = []
 
+        with open("debug_log.txt", "w") as f:
+            f.write("--- LOG START ---\n")
+
         self._start()
+
+    def log(self, message):
+            with open("debug_log.txt", "a") as f:
+                f.write(f"{message}\n")
+
+            print(message, flush=True)
 
     def on_created(self, event):
         job = self._new_job(event.src_path)
