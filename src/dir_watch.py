@@ -30,7 +30,6 @@ class Handler(FileSystemEventHandler):
         job = self._new_job(event.src_path)
 
         if self.active_jobs < JOB_COUNT:
-            time.sleep(1)
             job.start()
 
             self.started_jobs.append(job)
@@ -71,7 +70,6 @@ class Handler(FileSystemEventHandler):
             job = self._new_job(str(path))
 
             if self.active_jobs < JOB_COUNT:
-                time.sleep(1)
                 job.start()
 
                 self.started_jobs.append(job)
