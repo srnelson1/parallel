@@ -82,10 +82,10 @@ class Job():
         self.job_output.make_file()
 
         proc = subprocess.Popen(
-                [self.job_config.lang, self.job_config.file_path],
-                stdout = self.job_output.file,
-                stderr = self.job_error.file,
-                stdin = subprocess.DEVNULL
+            self.job_config.subproc,
+            stdout = self.job_output.file,
+            stderr = self.job_error.file,
+            stdin = subprocess.DEVNULL
         )
 
         self.proc = proc
