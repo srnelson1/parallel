@@ -6,7 +6,7 @@ CLOCK = [3600, 60, 1]
 class JobConfig():
     def __init__(self, 
                  root_dir,
-                 file_path,
+                 file_path=None,
                  subproc=None,
                  walltime=None,
                  has_output=False
@@ -40,8 +40,7 @@ class JobSubmission():
         config_lines = [line[3:].strip() for line in config_lines]
 
         job_config = JobConfig(
-            root_dir=self.root_dir,
-            file_path=self._build_file_script(script)
+            root_dir=self.root_dir
         )
 
         subproc_config = []
