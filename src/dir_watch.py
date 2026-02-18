@@ -92,8 +92,8 @@ def clean_jobs(handler):
         if job.returncode == None:
             job.stop()
 
-    if job.lifecycle.is_alive():
-        job.lifecycle.join(timeout=1.0)
+        if job.lifecycle.is_alive():
+            job.lifecycle.join(timeout=1.0)
 
 def start_lifecycle():
     signal.signal(signal.SIGTERM, raise_graceful_exit)
